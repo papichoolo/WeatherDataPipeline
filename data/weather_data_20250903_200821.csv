@@ -1,0 +1,55 @@
+city,country,temperature,feels_like,humidity,pressure,weather,description,wind_speed,timestamp
+Mumbai,IN,26.77,29.48,83,1006,Clouds,overcast clouds,5.06,1756909914
+Delhi,IN,27.27,31.64,91,1004,Clouds,overcast clouds,2.41,1756909556
+Bengaluru,IN,21.64,22.11,86,1010,Clouds,broken clouds,4.19,1756909934
+Hyderabad,IN,24.18,24.74,80,1006,Clouds,overcast clouds,2.84,1756910100
+Chennai,IN,29.19,32.95,69,1005,Clouds,overcast clouds,4.89,1756909696
+Kolkata,IN,26.82,30.04,88,1003,Clouds,overcast clouds,3.7,1756909680
+Pune,IN,22.42,23.04,89,1007,Clouds,overcast clouds,3.19,1756910149
+Ahmedabad,IN,29.74,32.34,60,1003,Clouds,broken clouds,2.79,1756910141
+Jaipur,IN,26.14,26.14,83,1004,Clouds,overcast clouds,2.46,1756909903
+Lucknow,IN,28.55,33.15,78,1003,Clouds,scattered clouds,2.88,1756909927
+Kanpur,IN,28.36,32.5,77,1003,Clouds,few clouds,2.86,1756909921
+Nagpur,IN,24.07,24.91,91,1003,Clouds,overcast clouds,3.08,1756910296
+Indore,IN,22.48,23.26,95,1004,Rain,moderate rain,4.69,1756909898
+Bhopal,IN,23.88,24.91,99,1002,Rain,light rain,2.46,1756909595
+Visakhapatnam,IN,28.66,35.66,90,1001,Clouds,overcast clouds,0.19,1756909997
+Patna,IN,31.09,35.04,60,1002,Clouds,few clouds,3.73,1756909671
+Vadodara,IN,28.69,31.73,68,1004,Rain,light rain,4.05,1756910245
+Ghaziabad,IN,25.51,26.49,91,1004,Clouds,overcast clouds,2.15,1756910175
+Ludhiana,IN,26.14,26.14,90,1005,Clear,clear sky,1.8,1756909952
+Agra,IN,27.51,31.16,82,1003,Clouds,overcast clouds,3.01,1756909951
+Nashik,IN,22.35,23.04,92,1006,Clouds,overcast clouds,3.34,1756909725
+Faridabad,IN,25.89,26.94,92,1004,Clouds,broken clouds,2.33,1756910232
+Meerut,IN,25.48,26.3,85,1004,Clouds,overcast clouds,1.99,1756910298
+Rajkot,IN,28.28,31.07,69,1005,Clouds,broken clouds,4.54,1756910115
+London,GB,19.65,19.76,80,994,Clouds,overcast clouds,7.65,1756909743
+Paris,FR,23.79,23.74,58,1005,Clouds,overcast clouds,7.18,1756910106
+Berlin,DE,24.89,24.77,51,1011,Clouds,broken clouds,4.88,1756910249
+Madrid,ES,29.58,28.19,27,1012,Clear,clear sky,4.63,1756910118
+Rome,US,23.45,23.57,66,1016,Clear,clear sky,1.11,1756910259
+Amsterdam,NL,22.52,22.76,74,1001,Clouds,broken clouds,8.36,1756910230
+Vienna,AT,26.26,26.26,41,1014,Clear,clear sky,1.57,1756910299
+Stockholm,SE,20.3,20.0,62,1010,Clouds,few clouds,4.39,1756910030
+Copenhagen,DK,22.23,22.15,63,1008,Clouds,broken clouds,7.07,1756910300
+Helsinki,FI,18.08,18.11,83,1012,Clouds,overcast clouds,4.13,1756910281
+Oslo,NO,19.11,18.72,63,1006,Clouds,broken clouds,3.89,1756910188
+Zurich,CH,25.32,25.24,51,1013,Clear,clear sky,0.92,1756910300
+Brussels,BE,22.45,22.63,72,1003,Clouds,overcast clouds,9.99,1756909725
+Dublin,US,14.0,13.54,80,1016,Clouds,broken clouds,0.6,1756910179
+Lisbon,PT,25.74,25.88,58,1017,Clear,clear sky,6.46,1756910301
+Prague,CZ,24.35,23.94,42,1014,Clouds,few clouds,3.29,1756910079
+Budapest,HU,26.87,27.07,46,1013,Clouds,broken clouds,2.36,1756910225
+Warsaw,PL,20.91,21.25,84,1015,Clouds,overcast clouds,0.69,1756909492
+Donji grad,HR,23.93,23.76,53,1014,Clouds,scattered clouds,1.72,1756910302
+Athens,GR,32.99,31.85,29,1009,Clouds,broken clouds,6.65,1756910302
+Istanbul,TR,29.77,32.59,61,1011,Clear,clear sky,6.7,1756909887
+Moscow,RU,18.43,17.97,63,1017,Clouds,few clouds,4.14,1756909795
+Kyiv,UA,26.09,26.09,41,1015,Clear,clear sky,2.92,1756910134
+Minsk,BY,24.15,24.08,56,1016,Clear,clear sky,2.49,1756910302
+Bucharest,RO,34.22,32.41,22,1010,Clear,clear sky,3.72,1756910303
+Sofia,BG,33.37,31.58,23,1009,Clouds,scattered clouds,4.19,1756910303
+Belgrade,RS,29.76,29.76,43,1012,Rain,heavy intensity rain,4.0,1756910303
+Sarajevo,BA,20.96,21.15,78,1014,Clouds,overcast clouds,1.39,1756910303
+Skopje,MK,22.1,22.45,80,1014,Rain,heavy intensity rain,5.17,1756910011
+Tirana,AL,26.45,26.45,63,1013,Clouds,overcast clouds,1.34,1756910017
