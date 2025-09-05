@@ -31,3 +31,16 @@ COLLECTIONS = {
     "STATISTICS": "weather_statistics",
     "BATCH_PREFIX": "weather_batch_"  # Prefix for batch collections
 }
+
+# MLflow & MLOps Configuration
+# Use SQLite for local Model Registry support
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlruns.db")
+MLFLOW_EXPERIMENT_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "weather-ml")
+
+MODEL_NAMES = {
+    "REGRESSOR": os.getenv("MODEL_NAME_REGRESSOR", "weather_temp_regressor"),
+    "CLASSIFIER": os.getenv("MODEL_NAME_CLASSIFIER", "weather_condition_classifier"),
+}
+
+# Predictions collection for monitoring
+PREDICTIONS_COLLECTION = os.getenv("PREDICTIONS_COLLECTION", "predictions")

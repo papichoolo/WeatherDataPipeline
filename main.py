@@ -6,6 +6,18 @@ from load import save_to_csv, save_to_mongodb, get_weather_data_from_mongodb, li
 from config import MONGODB_PASSWORD
 import pandas as pd
 from datetime import datetime
+import os
+
+# ML imports
+from ml.training import retrain_from_mongo
+from ml.predict import predict, evaluate_and_log, evaluate_with_details
+from ml.registry import promote_best
+from config import PREDICTIONS_COLLECTION
+try:
+    from ml.scheduler import start_scheduler
+    SCHEDULER_AVAILABLE = True
+except Exception:
+    SCHEDULER_AVAILABLE = False
 
 app = FastAPI(
     title="Weather ETL Pipeline",
@@ -22,6 +34,12 @@ def root():
             "/run-etl-mongodb - Run ETL with MongoDB storage",
             "/weather-data/{collection_name} - Get data from MongoDB collection",
             "/collections - List all MongoDB collections",
+            "/train - Train & log models to MLflow",
+            "/predict/temp - Predict temperature",
+            "/predict/weather - Predict weather condition",
+            "/scheduler/start - Start APScheduler (retrain every 5 minutes)",
+            "/monitor/eval - Evaluate Production models and log metrics",
+            "/registry/promote - Promote best run to Production",
             "/health - API health check"
         ]
     }
@@ -93,6 +111,127 @@ def run_etl_mongodb():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"ETL pipeline failed: {str(e)}")
 
+
+@app.post("/train")
+def train_models():
+    try:
+        success = retrain_from_mongo(MONGODB_PASSWORD)
+        return {"status": "ok" if success else "failed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+
+
+@app.get("/predict/temp")
+def predict_temperature(limit: int = 100):
+    try:
+        df = get_weather_data_from_mongodb("raw_weather_data", MONGODB_PASSWORD)
+        if df is None or df.empty:
+            raise HTTPException(status_code=404, detail="No data available for prediction")
+        df = df.sort_values('timestamp').tail(limit)
+        preds = predict(df)
+        out = pd.concat([df.reset_index(drop=True), preds.reset_index(drop=True)], axis=1)
+        # optional: persist predictions
+        try:
+            from mongodb_config import mongodb_config
+            if mongodb_config.connect(MONGODB_PASSWORD):
+                coll = mongodb_config.get_collection(PREDICTIONS_COLLECTION)
+                records = out.assign(pred_type='regression', inserted_at=datetime.now()).to_dict('records')
+                coll.insert_many(records)
+        except Exception:
+            pass
+        return {
+            "count": len(out),
+            "columns": list(out.columns),
+            "data": out[['city','timestamp','temperature','pred_temperature']].tail(10).to_dict(orient='records')
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+
+@app.get("/monitor/eval")
+def evaluate_models(limit: int = 500, run_etl: bool = False, persist: bool = False):
+    try:
+        # Optionally refresh latest data via ETL
+        if run_etl:
+            try:
+                raw = fetch_weather_data()
+                if raw:
+                    df_etl = transform_weather_data(raw)
+                    save_to_csv(df_etl)
+                    save_to_mongodb(df_etl, MONGODB_PASSWORD)
+            except Exception as e:
+                # Don't block evaluation if ETL fails; continue with existing data
+                print(f"ETL before eval failed: {e}")
+        df = get_weather_data_from_mongodb("raw_weather_data", MONGODB_PASSWORD)
+        if df is None or df.empty:
+            raise HTTPException(status_code=404, detail="No data available for evaluation")
+        df = df.sort_values('timestamp').tail(limit)
+        if persist:
+            metrics, details = evaluate_with_details(df)
+            # Persist predictions vs actuals batch for traceability
+            try:
+                from mongodb_config import mongodb_config
+                if mongodb_config.connect(MONGODB_PASSWORD):
+                    coll = mongodb_config.get_collection(PREDICTIONS_COLLECTION)
+                    from datetime import datetime
+                    records = details.assign(pred_type='eval', inserted_at=datetime.now()).to_dict('records')
+                    if records:
+                        coll.insert_many(records)
+            except Exception:
+                pass
+            return {"status": "ok", "metrics": metrics, "persisted": True, "rows": int(len(details))}
+        else:
+            metrics = evaluate_and_log(df)
+            return {"status": "ok", "metrics": metrics}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")
+
+
+@app.post("/registry/promote")
+def registry_promote(task: str = "regression"):
+    try:
+        if task not in ("regression", "classification"):
+            raise HTTPException(status_code=400, detail="task must be 'regression' or 'classification'")
+        result = promote_best(task)  # promotes to Production
+        return {"status": "ok", **result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Promotion failed: {str(e)}")
+
+
+@app.get("/predict/weather")
+def predict_weather(limit: int = 100):
+    try:
+        df = get_weather_data_from_mongodb("raw_weather_data", MONGODB_PASSWORD)
+        if df is None or df.empty:
+            raise HTTPException(status_code=404, detail="No data available for prediction")
+        df = df.sort_values('timestamp').tail(limit)
+        preds = predict(df)
+        out = pd.concat([df.reset_index(drop=True), preds.reset_index(drop=True)], axis=1)
+        # optional: persist predictions
+        try:
+            from mongodb_config import mongodb_config
+            if mongodb_config.connect(MONGODB_PASSWORD):
+                coll = mongodb_config.get_collection(PREDICTIONS_COLLECTION)
+                records = out.assign(pred_type='classification', inserted_at=datetime.now()).to_dict('records')
+                coll.insert_many(records)
+        except Exception:
+            pass
+        return {
+            "count": len(out),
+            "columns": list(out.columns),
+            "data": out[['city','timestamp','weather','pred_condition']].tail(10).to_dict(orient='records')
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
 @app.get("/weather-data/{collection_name}")
 def get_weather_data(collection_name: str):
     """Get weather data from a specific MongoDB collection"""
@@ -141,6 +280,20 @@ def health_check():
         "service": "Weather ETL Pipeline"
     }
 
+
+@app.post("/scheduler/start")
+def start_cron_scheduler():
+    if not SCHEDULER_AVAILABLE:
+        raise HTTPException(status_code=400, detail="Scheduler dependency not installed")
+    try:
+        start_scheduler()
+        return {"status": "started", "job": "daily_retrain"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start scheduler: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
+    # Optionally start scheduler when run as script
+    if SCHEDULER_AVAILABLE and os.getenv("START_SCHEDULER", "0") == "1":
+        start_scheduler()
     uvicorn.run(app, host="0.0.0.0", port=8000)

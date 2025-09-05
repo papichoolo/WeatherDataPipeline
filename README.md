@@ -152,42 +152,35 @@ python main.py
 ### Access Interactive Documentation:
 Visit: `http://localhost:8000/docs`
 
-## 📈 Ready for MLflow Integration
+## 📈 ML, MLflow, and Scheduler Usage
 
-Your pipeline is ready for the next phase. Here's what you can add:
-
-### 1. ML Model Training
-```python
-# Add to your pipeline
-import mlflow
-import mlflow.sklearn
-from sklearn.ensemble import RandomForestRegressor
-
-def train_weather_model(data):
-    with mlflow.start_run():
-        model = RandomForestRegressor()
-        # Training logic
-        mlflow.sklearn.log_model(model, "weather_model")
+### Dependencies
+Install requirements:
+```
+pip install -r requirements.txt
 ```
 
-### 2. Model Serving Endpoint
-```python
-# Add to main.py
-@app.post("/predict")
-async def predict_weather(features: WeatherFeatures):
-    model = mlflow.sklearn.load_model("models:/weather_model/Production")
-    prediction = model.predict(features.to_array())
-    return {"prediction": prediction}
+Ensure .env contains:
+```
+OPENWEATHER_API_KEY=...
+MONGODB_PASSWORD=...
+MLFLOW_TRACKING_URI=sqlite:///mlruns.db
 ```
 
-### 3. Monitoring Integration
-```python
-# Add model performance tracking
-def log_prediction_metrics(actual, predicted):
-    mlflow.log_metrics({
-        "mae": mean_absolute_error(actual, predicted),
-        "rmse": mean_squared_error(actual, predicted, squared=False)
-    })
+### Endpoints Summary
+
+- Run ETL to MongoDB: GET `/run-etl-mongodb`
+- Train and log models: POST `/train`
+- Predict temperature: GET `/predict/temp`
+- Predict weather condition: GET `/predict/weather`
+- Evaluate and log metrics: GET `/monitor/eval`
+- Start daily retraining scheduler: POST `/scheduler/start`
+- Promote best model to Production: POST `/registry/promote?task=regression` or `classification`
+
+### MLflow UI
+Start UI to compare runs and manage registry:
+```
+mlflow ui --backend-store-uri sqlite:///mlruns.db
 ```
 
 ## 🎯 Production Readiness Features
@@ -227,3 +220,46 @@ def log_prediction_metrics(actual, predicted):
 5. **Set up automated retraining**
 
 Your ETL pipeline foundation is solid and ready for machine learning integration!
+
+---
+
+## ML Extensions (Added)
+
+- Feature engineering: temporal lags (t-1, t-3), rolling averages/std, hour/day-of-week.
+- Tasks: Regression (next temperature) and Classification (weather condition).
+- Training: TimeSeriesSplit CV, metrics (MAE, RMSE, Accuracy, F1) logged to MLflow.
+- Registry: Models registered as `weather_temp_regressor` and `weather_condition_classifier` using a local SQLite MLflow backend.
+- Inference: New FastAPI endpoints for predictions and monitoring.
+- Scheduling: APScheduler job to retrain daily at midnight.
+
+### Quickstart
+
+1) Install deps
+```
+pip install -r requirements.txt
+```
+
+2) Ensure .env has:
+```
+MLFLOW_TRACKING_URI=sqlite:///mlruns.db
+OPENWEATHER_API_KEY=...
+MONGODB_PASSWORD=...
+```
+
+3) Run API
+```
+uvicorn main:app --reload
+```
+
+4) Flow
+- GET /run-etl-mongodb → ingest data
+- POST /train → train & log models to MLflow (also moves latest to Staging)
+- Optional: Promote best versions to Production in MLflow UI
+  - Start UI: `mlflow ui --backend-store-uri sqlite:///mlruns.db`
+- GET /predict/temp and /predict/weather → online predictions
+- GET /monitor/eval → computes live metrics and logs to MLflow
+- POST /scheduler/start → starts daily midnight retraining job
+
+Notes:
+- The inference endpoints load models from MLflow Registry. Ensure versions exist and are promoted to Production (or at least Staging/None for fallback).
+- Predictions are optionally stored in `predictions` MongoDB collection for monitoring.

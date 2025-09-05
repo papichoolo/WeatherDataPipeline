@@ -1,0 +1,10 @@
+pandas
+numpy
+requests
+pymongo
+python-dotenv
+fastapi
+uvicorn
+scikit-learn
+mlflow
+apscheduler
