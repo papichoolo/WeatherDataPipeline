@@ -22,7 +22,7 @@ CITIES = [
 ]
 
 # MongoDB Configuration
-MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD", "test123")  # Default password for demo
+MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD")  # Default password for demo
 
 # Database Collections
 COLLECTIONS = {
